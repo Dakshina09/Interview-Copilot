@@ -3,7 +3,7 @@
  
 An AI-powered interview preparation tool that generates tailored questions from your resume and a job description, scores your practice answers like a real interviewer would, and gives real-time cue-card assistance during live calls.
  
-** Live demo:** [Live Link](https://interview-copilot-4keka9wmap96eadzdsyxy2.streamlit.app/)
+### Live demo: [Live Link](https://interview-copilot-4keka9wmap96eadzdsyxy2.streamlit.app/)
  
 ---
  
