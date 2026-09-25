@@ -49,5 +49,5 @@ for row in (PAGES[:3], PAGES[3:]):
 
 st.divider()
 st.caption(
-    "Built with Streamlit + Groq (Llama 3.3 70B for reasoning, Whisper Large v3 Turbo for speech-to-text) + fastembed (bge-small) for matching.."
+    "Built with Streamlit + Groq (auto-selected open LLM for reasoning, Whisper for speech-to-text) + fastembed (bge-small) for matching."
 )

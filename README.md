@@ -34,7 +34,7 @@ Record a live interviewer question and get short cue-card bullets grounded in yo
 | Layer | Choice | Why |
 |---|---|---|
 | UI | Streamlit (multi-page) | Fast to build, matches rest of my portfolio |
-| LLM reasoning | Groq — `llama-3.3-70b-versatile` | Free tier, low latency, forced JSON mode for reliable structured output |
+| LLM reasoning | Groq — auto-selected (prefers `openai/gpt-oss-120b`) | Free tier, low latency, forced JSON mode. The model is picked at runtime from what the API reports as available, so a retired model doesn't break the app; override with `GROQ_CHAT_MODEL` |
 | Speech-to-text | Groq — `whisper-large-v3-turbo` | Same API/key as the LLM calls — no second provider to manage |
 | PDF parsing | `pypdf` | Lightweight resume text extraction |
 | Audio capture | `streamlit-mic-recorder` | In-browser mic recording, no extra backend needed |
