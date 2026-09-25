@@ -4,3 +4,6 @@ pypdf
 streamlit-mic-recorder
 python-dotenv
 plotly
+pandas
+numpy
+fastembed

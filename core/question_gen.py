@@ -12,6 +12,7 @@ Return ONLY a JSON object of this exact shape:
   "questions": [
     {
       "category": "Behavioral" | "Technical" | "Project-Specific" | "System Design" | "Resume Gap",
+      "target_skill": "the single skill this question mainly tests (use a name from the JD skill list when one fits)",
       "question": "string",
       "why_asked": "one line on why an interviewer would ask this",
       "model_answer": "a strong, concise model answer using the candidate's actual background, 4-6 sentences"
@@ -21,7 +22,19 @@ Return ONLY a JSON object of this exact shape:
 No markdown, no commentary, valid JSON only."""
 
 
-def generate_questions(resume_text: str, jd_text: str, num_questions: int = 10) -> list[dict]:
+def generate_questions(resume_text: str, jd_text: str, num_questions: int = 10,
+                       jd_skills: list[str] | None = None,
+                       focus_skills: list[str] | None = None) -> list[dict]:
+    """focus_skills: weak skills from the matcher -- roughly 40% of questions probe these."""
+    extra = ""
+    if jd_skills:
+        extra += f"\nJD SKILL LIST (use these names for target_skill): {', '.join(jd_skills)}"
+    if focus_skills:
+        n_focus = max(1, round(num_questions * 0.4))
+        extra += (f"\nWEAK AREAS: {', '.join(focus_skills)}. At least {n_focus} questions must "
+                  "probe these directly -- ask how the candidate would apply them, or about "
+                  "adjacent experience they do have. Use category \"Resume Gap\" for these.")
+
     user_prompt = f"""RESUME:
 {resume_text[:6000]}
 
@@ -30,7 +43,7 @@ JOB DESCRIPTION:
 
 Generate exactly {num_questions} questions, mixing categories, ordered roughly from
 easier/behavioral to harder/technical. Ground every question in specifics from the
-resume (real project names, tools, numbers) and the JD (required skills)."""
+resume (real project names, tools, numbers) and the JD (required skills).{extra}"""
 
     raw = chat(
         messages=[
@@ -43,6 +56,9 @@ resume (real project names, tools, numbers) and the JD (required skills)."""
 
     try:
         data = json.loads(raw)
-        return data.get("questions", [])
+        questions = data.get("questions", [])
+        for q in questions:
+            q.setdefault("target_skill", "")
+        return questions
     except json.JSONDecodeError:
         return []

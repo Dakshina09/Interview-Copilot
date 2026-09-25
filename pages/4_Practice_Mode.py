@@ -5,15 +5,12 @@ from dotenv import load_dotenv
 from streamlit_mic_recorder import mic_recorder
 from core.groq_client import transcribe_audio
 from core.evaluator import evaluate_answer
+from core.state import init_state, record_interview_score
 
 load_dotenv()
 st.set_page_config(page_title="Practice Mode", page_icon="🎯", layout="wide")
 st.title("🎯 Practice Mode")
-
-if "generated_questions" not in st.session_state:
-    st.session_state.generated_questions = []
-if "score_history" not in st.session_state:
-    st.session_state.score_history = []
+init_state()
 
 DEFAULT_QUESTIONS = [
     {"category": "Behavioral", "question": "Tell me about a challenging bug you debugged.",
@@ -26,13 +23,16 @@ DEFAULT_QUESTIONS = [
 
 question_pool = st.session_state.generated_questions or DEFAULT_QUESTIONS
 if not st.session_state.generated_questions:
-    st.info("No custom questions yet -- using generic fallback questions. Generate your own on the Resume + JD Analysis page.")
+    st.info("No custom questions yet -- using generic fallback questions. Generate your own on the Interview Questions page.")
 
 labels = [f"[{q['category']}] {q['question']}" for q in question_pool]
 selected_idx = st.selectbox("Pick a question", range(len(labels)), format_func=lambda i: labels[i])
 question = question_pool[selected_idx]["question"]
+target_skill = question_pool[selected_idx].get("target_skill", "")
 
 st.markdown(f"### {question}")
+if target_skill:
+    st.caption(f"Tests: **{target_skill}** — your score here updates that skill on the Profile & Match page.")
 
 input_mode = st.radio("Answer via", ["Type", "Record audio"], horizontal=True)
 
@@ -55,8 +55,10 @@ if st.button("Get Feedback", type="primary", disabled=not answer_text):
             resume_context = st.session_state.get("resume_text", "")
             result = evaluate_answer(question, answer_text, resume_context)
             st.session_state.score_history.append(
-                {"question": question, "score": result["overall_score"]}
+                {"question": question, "score": result["overall_score"], "skill": target_skill}
             )
+            if record_interview_score(target_skill, result["overall_score"]):
+                st.toast(f"Updated interview score for {target_skill}")
 
         st.divider()
         m1, m2, m3, m4, m5 = st.columns(5)
@@ -73,7 +75,7 @@ if st.button("Get Feedback", type="primary", disabled=not answer_text):
             fill="toself",
         ))
         fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 10])), showlegend=False, height=350)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         col_s, col_i = st.columns(2)
         with col_s:
@@ -94,4 +96,4 @@ if len(st.session_state.score_history) > 1:
     scores = [h["score"] for h in st.session_state.score_history]
     fig2 = go.Figure(data=go.Scatter(y=scores, mode="lines+markers"))
     fig2.update_layout(yaxis=dict(range=[0, 10]), xaxis_title="Attempt", yaxis_title="Overall score", height=300)
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(fig2, width="stretch")

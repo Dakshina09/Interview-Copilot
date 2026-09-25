@@ -18,7 +18,7 @@ if "live_log" not in st.session_state:
 
 resume_context = st.session_state.get("resume_text", "")
 if not resume_context:
-    st.info("No resume loaded -- hints will be generic. Load one on the Resume + JD Analysis page for personalized cues.")
+    st.info("No resume loaded -- hints will be generic. Load one on the Profile & Match page for personalized cues.")
 
 audio = mic_recorder(start_prompt="🎙️ Record question", stop_prompt="⏹️ Stop", key="live_recorder")
 

@@ -4,10 +4,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-st.set_page_config(page_title="AI Interview Copilot", page_icon="🎯", layout="wide")
+st.set_page_config(page_title="AI Career Readiness Platform", page_icon="🎯", layout="wide")
 
-st.title("🎯 AI Interview Copilot")
-st.caption("Resume-aware interview prep: generate questions, practice with feedback, get live assist.")
+st.title("🎯 AI Career Readiness Platform")
+st.caption("Resume intelligence + interview copilot: find your gaps against a job, close them, then prove it in practice.")
 
 if not os.environ.get("GROQ_API_KEY"):
     st.warning(
@@ -19,36 +19,35 @@ else:
 
 st.divider()
 
-col1, col2, col3 = st.columns(3)
+PAGES = [
+    ("🧭 Profile & Match", "pages/1_Profile_and_Match.py",
+     "Resume → structured profile (skills, experience, projects) → per-skill match "
+     "against a job description, with a plain-English explanation of your gaps."),
+    ("🗺️ Skill Gap Plan", "pages/2_Skill_Gap_Plan.py",
+     "Turn the gaps into a week-by-week learning plan that builds on projects you've "
+     "already done."),
+    ("📄 Interview Questions", "pages/3_Interview_Questions.py",
+     "Tailored questions with model answers -- weighted toward your weakest skills and "
+     "tagged with the skill each one tests."),
+    ("🎯 Practice Mode", "pages/4_Practice_Mode.py",
+     "Answer typed or spoken, get LLM-as-judge feedback. Scores feed back into the skill "
+     "they test, so you can see claimed vs. shown."),
+    ("🎙️ Live Assist", "pages/5_Live_Assist.py",
+     "Record a live interviewer question and get glance-able cue bullets grounded in your "
+     "resume -- a memory jog, not a script."),
+]
 
-with col1:
-    st.subheader("📄 Resume + JD Analysis")
-    st.write(
-        "Upload your resume and paste a job description. Get a tailored set of "
-        "likely interview questions with model answers, grounded in your actual "
-        "projects and the role's requirements."
-    )
-    st.page_link("pages/1_Resume_JD_Analysis.py", label="Open", icon="➡️")
+st.markdown("**Flow:** Resume + JD → Match → Gap plan → Targeted questions → Practice → updated skill scores")
 
-with col2:
-    st.subheader("🎯 Practice Mode")
-    st.write(
-        "Answer questions (typed or spoken) and get scored feedback across "
-        "relevance, structure (STAR), specificity, and communication -- plus a "
-        "tightened rewrite of your answer."
-    )
-    st.page_link("pages/2_Practice_Mode.py", label="Open", icon="➡️")
-
-with col3:
-    st.subheader("🎙️ Live Assist")
-    st.write(
-        "Record a live interviewer question, get instant glance-able talking "
-        "point bullets grounded in your resume -- a real-time cue card, not a "
-        "scripted answer."
-    )
-    st.page_link("pages/3_Live_Assist.py", label="Open", icon="➡️")
+for row in (PAGES[:3], PAGES[3:]):
+    cols = st.columns(3)
+    for col, (title, path, desc) in zip(cols, row):
+        with col:
+            st.subheader(title)
+            st.write(desc)
+            st.page_link(path, label="Open", icon="➡️")
 
 st.divider()
 st.caption(
-    "Built with Streamlit + Groq (Llama 3.3 70B for reasoning, Whisper Large v3 Turbo for speech-to-text)."
+    "Built with Streamlit + Groq (Llama 3.3 70B for reasoning, Whisper Large v3 Turbo for speech-to-text) + fastembed (bge-small) for matching.."
 )

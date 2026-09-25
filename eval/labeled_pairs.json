@@ -1,0 +1,40 @@
+[
+  {
+    "id": "example-ml-intern",
+    "note": "EXAMPLE pair -- replace/extend with real resumes + JDs you label by hand (aim for 10-20).",
+    "resume_text": "B.Tech Mechanical Engineering. Skills: Python, SQL, scikit-learn, Pandas, Streamlit. Projects: Customer churn prediction on Telco data comparing logistic regression, random forest, XGBoost and SVM with cross-validation. RAG notes assistant with hybrid FAISS + BM25 retrieval. Internship: built data dashboards and wrote PostgreSQL queries with window functions.",
+    "skills": [
+      {"skill": "Python", "required": true, "label": 100},
+      {"skill": "Machine Learning", "required": true, "label": 90},
+      {"skill": "SQL", "required": true, "label": 90},
+      {"skill": "Docker", "required": true, "label": 0},
+      {"skill": "AWS", "required": false, "label": 0},
+      {"skill": "Information Retrieval", "required": false, "label": 70}
+    ]
+  },
+  {
+    "id": "example-backend",
+    "note": "EXAMPLE pair.",
+    "resume_text": "Software engineer, 2 years. Built REST APIs in FastAPI and Flask, containerized services with Docker and deployed on AWS EC2 with GitHub Actions CI. Wrote unit tests with pytest. Some React for internal tools.",
+    "skills": [
+      {"skill": "Python", "required": true, "label": 90},
+      {"skill": "Docker", "required": true, "label": 100},
+      {"skill": "Kubernetes", "required": false, "label": 20},
+      {"skill": "CI/CD", "required": true, "label": 85},
+      {"skill": "Machine Learning", "required": false, "label": 0},
+      {"skill": "Frontend development", "required": false, "label": 60}
+    ]
+  },
+  {
+    "id": "example-data-analyst",
+    "note": "EXAMPLE pair.",
+    "resume_text": "Data analyst. Built Power BI and Tableau dashboards for sales KPIs, automated Excel reporting with Python (pandas), ran A/B test analysis with t-tests and presented findings to leadership.",
+    "skills": [
+      {"skill": "Data Visualization", "required": true, "label": 100},
+      {"skill": "Statistics", "required": true, "label": 75},
+      {"skill": "SQL", "required": true, "label": 30},
+      {"skill": "Stakeholder communication", "required": false, "label": 85},
+      {"skill": "Deep Learning", "required": false, "label": 0}
+    ]
+  }
+]
