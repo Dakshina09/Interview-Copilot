@@ -4,9 +4,11 @@ Handles both LLM chat completions and audio transcription (Whisper)
 so the rest of the app never touches the SDK directly.
 """
 
+import json
 import os
+import re
 from functools import lru_cache
-from groq import Groq
+from groq import Groq, BadRequestError, NotFoundError
 
 # Groq retires models regularly. Instead of hard-coding one ID, we ask the API which
 # models this key can use and take the first available one from these preference lists.
@@ -63,19 +65,86 @@ def stt_model() -> str:
     return _pick("GROQ_STT_MODEL", STT_MODEL_PREFERENCES, "speech-to-text")
 
 
-def chat(messages: list[dict], temperature: float = 0.7, json_mode: bool = False) -> str:
-    """Run a chat completion. messages = [{"role": "user"/"system", "content": "..."}]"""
-    client = get_client()
+REASONING_EFFORT = {            # keep hidden reasoning short so it can't eat the output budget
+    "openai/gpt-oss": "low",
+    "qwen/qwen3": "none",
+}
+
+
+def _reasoning_extra(model: str) -> dict:
+    for prefix, effort in REASONING_EFFORT.items():
+        if model.startswith(prefix):
+            return {"reasoning_effort": effort}
+    return {}
+
+
+def extract_json(text: str) -> str:
+    """Pull the JSON object out of a free-text reply (think tags, code fences, prose)."""
+    text = re.sub(r"<think>.*?</think>", "", text or "", flags=re.S)
+    text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text.strip())
+    start, end = text.find("{"), text.rfind("}")
+    if start == -1 or end <= start:
+        return ""
+    candidate = text[start:end + 1]
+    try:
+        json.loads(candidate)
+        return candidate
+    except json.JSONDecodeError:
+        return ""
+
+
+def _complete(model: str, messages: list[dict], temperature: float, json_mode: bool) -> str:
     kwargs = {
-        "model": chat_model(),
+        "model": model,
         "messages": messages,
         "temperature": temperature,
+        "max_completion_tokens": 8192 if json_mode else 2048,
     }
     if json_mode:
         kwargs["response_format"] = {"type": "json_object"}
+    extra = _reasoning_extra(model)
+    if extra:
+        kwargs["extra_body"] = extra      # works across groq SDK versions
+    response = get_client().chat.completions.create(**kwargs)
+    return response.choices[0].message.content or ""
 
-    response = client.chat.completions.create(**kwargs)
-    return response.choices[0].message.content
+
+def _fallback_models(current: str) -> list[str]:
+    available = _available_models()
+    return [m for m in CHAT_MODEL_PREFERENCES
+            if m != current and (not available or m in available)]
+
+
+def chat(messages: list[dict], temperature: float = 0.7, json_mode: bool = False) -> str:
+    """Run a chat completion. messages = [{"role": "user"/"system", "content": "..."}]
+
+    With json_mode=True this always returns a JSON string (or "" if every attempt failed):
+      1. strict JSON mode on the chosen model
+      2. same model, free text + JSON extraction (Groq's JSON validator rejects some
+         otherwise-fine outputs, especially from reasoning models)
+      3. next available model, same as 2
+    """
+    model = chat_model()
+    if not json_mode:
+        return _complete(model, messages, temperature, False)
+
+    try:
+        raw = _complete(model, messages, temperature, True)
+        if extract_json(raw):
+            return extract_json(raw)
+    except BadRequestError:
+        pass
+
+    nudge = messages + [{"role": "user", "content":
+                         "Reply with the JSON object only: no prose, no markdown fences."}]
+    for m in [model] + _fallback_models(model)[:2]:
+        try:
+            out = extract_json(_complete(m, nudge, temperature, False))
+            if out:
+                return out
+        except (BadRequestError, NotFoundError):
+            continue
+    return ""
 
 
 def transcribe_audio(audio_bytes: bytes, filename: str = "audio.wav") -> str:
