@@ -26,6 +26,9 @@ Tailored questions with model answers. About 40% target your weakest skills, and
 ###  Practice Mode
 Answer by typing or speaking (Whisper). An LLM-as-judge scores relevance, structure (STAR), specificity and communication. The score is written back to the question's skill, which powers the **claimed vs. shown** table on the Profile & Match page.
 
+###  Tailored Resume
+Pulls your public GitHub repos (metadata + README), ranks them against the job description, and rewrites your resume for that role. A deterministic claim checker then compares every bullet with the source it came from: any number or technology that isn't in your resume or that repo's README is flagged, unticked, and kept out of the PDF unless you approve it. Exports a one-page LaTeX resume (auto-trimmed to fit), a compiled PDF, or opens it straight in Overleaf.
+
 ###  Live Assist
 Record a live interviewer question and get short cue-card bullets grounded in your resume: a memory jog, not a script.
 
@@ -50,6 +53,9 @@ Job Desc ─────────────────────► jd_p
                                                                                             ├─► gap_planner (LLM) ─► learning plan
                                                                                             └─► question_gen (LLM) ─► skill-tagged questions
                                                                                                         │
+GitHub repos ─► github_ingest ─► project_ranker ─┐
+Resume + JD + gaps ──────────────────────────────┴─► resume_writer (LLM) ─► claim_checker ─► latex_render ─► .tex / PDF
+
 User answer (text/audio) ─► [Whisper] ─► evaluator (LLM-as-judge) ─► score ─► written back to that skill in MatchResult
 Live audio ─► Whisper ─► live_assist ─► cue bullets
 ```
@@ -64,6 +70,7 @@ All LLM calls funnel through a single `core/groq_client.py` wrapper — one plac
 - **Single API surface:** using Groq for both chat completions and Whisper transcription avoids juggling two providers/keys and keeps latency low end-to-end.
 - **Extraction by LLM, scoring by math:** match percentages come from calibrated cosine similarity + exact-match rules (claimed with evidence = 100%, mentioned in a project = 90%, keyword only = 85%), not from asking an LLM "how good a fit is this?". That makes scores reproducible and testable.
 - **Evidence-backed scores:** every skill score keeps the resume line it matched, shown on hover, so a score is never a black box.
+- **No invented achievements:** the resume writer must cite a source phrase for every bullet, and `claim_checker.py` verifies numbers and technologies against that item's own source (its README or the original resume). The LLM can rephrase but can't make things up.
 - **Closed feedback loop:** practice scores are keyed to the same skill objects as the resume match, which enables "claimed but not shown" detection.
 - **Session-state only, by design:** no database in v1 — keeps the app simple to run locally and deploy. A natural next step (see below) is persisting practice history.
 ## Project Structure
@@ -76,7 +83,8 @@ interview-copilot/
 │   ├── 2_Skill_Gap_Plan.py         # gaps -> learning plan
 │   ├── 3_Interview_Questions.py    # gap-targeted, skill-tagged questions
 │   ├── 4_Practice_Mode.py          # scored practice, feeds skill scores
-│   └── 5_Live_Assist.py
+│   ├── 5_Live_Assist.py
+│   └── 6_Tailored_Resume.py        # GitHub-aware resume rewrite -> LaTeX / PDF
 ├── core/
 │   ├── schemas.py                  # CandidateProfile, JobProfile, SkillScore, MatchResult
 │   ├── groq_client.py              # chat + transcription wrapper
@@ -94,6 +102,7 @@ interview-copilot/
 │   ├── labeled_pairs.json          # hand-labeled resume/skill match scores
 │   └── run_eval.py                 # MAE, Spearman, gap P/R/F1 + threshold calibration
 ├── requirements.txt
+├── packages.txt                    # TeX Live for PDF compile on Streamlit Cloud
 └── .streamlit/secrets.toml         # local only, gitignored
 ```
 
@@ -121,6 +130,8 @@ Create `.streamlit/secrets.toml`:
 GROQ_API_KEY = "gsk_your_key_here"
 ```
 (free key: https://console.groq.com/keys)
+
+Optional: `GITHUB_TOKEN` (any read-only token) raises GitHub's API limit from 60 to 5,000 requests/hour. For PDF output locally, install a TeX distribution (MiKTeX on Windows); without one the app still gives you the `.tex` and an Open in Overleaf button.
  
 ```bash
 streamlit run app.py

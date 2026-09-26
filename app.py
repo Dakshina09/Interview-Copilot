@@ -32,12 +32,15 @@ PAGES = [
     ("🎯 Practice Mode", "pages/4_Practice_Mode.py",
      "Answer typed or spoken, get LLM-as-judge feedback. Scores feed back into the skill "
      "they test, so you can see claimed vs. shown."),
+    ("📝 Tailored Resume", "pages/6_Tailored_Resume.py",
+     "Pull your GitHub projects, rewrite your resume for this job, check every claim "
+     "against its source, and export a one-page LaTeX / PDF."),
     ("🎙️ Live Assist", "pages/5_Live_Assist.py",
      "Record a live interviewer question and get glance-able cue bullets grounded in your "
      "resume -- a memory jog, not a script."),
 ]
 
-st.markdown("**Flow:** Resume + JD → Match → Gap plan → Targeted questions → Practice → updated skill scores")
+st.markdown("**Flow:** Resume + JD → Match → Gap plan → Targeted questions → Practice → updated skill scores → Tailored resume")
 
 for row in (PAGES[:3], PAGES[3:]):
     cols = st.columns(3)
